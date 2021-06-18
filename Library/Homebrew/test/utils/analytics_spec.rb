@@ -14,7 +14,8 @@ describe Utils::Analytics do
       it "returns OS_VERSION and prefix when HOMEBREW_PREFIX is a custom prefix" do
         allow(Hardware::CPU).to receive(:type).and_return(:intel)
         allow(Homebrew).to receive(:default_prefix?).and_return(false)
-        expect(described_class.os_arch_prefix_ci).to include("#{OS_VERSION}, #{described_class.custom_prefix_label}")
+        expect(described_class.os_arch_prefix_ci)
+          .to include("#{OS_VERSION},", " #{described_class.custom_prefix_label}")
       end
 
       it "does not include prefix when HOMEBREW_PREFIX is the default prefix" do

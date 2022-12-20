@@ -68,6 +68,9 @@ module Homebrew
       switch "--cask", "--casks",
              description: "Treat all named arguments as casks."
 
+      comma_array "--skip-dependencies=",
+                  description: "Skip showing these dependencies. Only works with `--tree` or `--graph`."
+
       conflicts "--tree", "--graph"
       conflicts "--installed", "--eval-all"
       conflicts "--installed", "--all"
@@ -280,6 +283,7 @@ module Homebrew
     includes, ignores = args_includes_ignores(args)
     deps = @use_runtime_dependencies ? f.runtime_dependencies : f.deps
     deps = reject_ignores(deps, ignores, includes)
+    deps.reject! { |dep| args.skip_dependencies.include? dep.name } if args.skip_dependencies.present?
     reqs = reject_ignores(f.requirements, ignores, includes) if args.include_requirements?
     reqs ||= []
     reqs + deps

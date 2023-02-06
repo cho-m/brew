@@ -3398,7 +3398,7 @@ class Formula
 
     # Disables a {Formula} (on the given date) so it cannot be
     # installed. If the date has not yet passed the formula
-    # will be deprecated instead of disabled.
+    # will be deprecated instead of disabled starting 3 months before date.
     # <pre>disable! date: "2020-08-27", because: :does_not_build</pre>
     # <pre>disable! date: "2020-08-27", because: "has been replaced by foo"</pre>
     # @see https://docs.brew.sh/Deprecating-Disabling-and-Removing-Formulae
@@ -3406,7 +3406,9 @@ class Formula
     def disable!(date:, because:)
       @disable_date = Date.parse(date)
 
-      if @disable_date > Date.today
+      if @disable_date > Date.today >> 3
+        return
+      elsif @disable_date > Date.today
         @deprecation_reason = because
         @deprecated = true
         return

@@ -14,8 +14,8 @@
 # HOMEBREW_UPDATE_CLEANUP, HOMEBREW_UPDATE_TO_TAG are from the user environment
 # HOMEBREW_LIBRARY, HOMEBREW_PREFIX, HOMEBREW_REPOSITORY are set by bin/brew
 # HOMEBREW_BREW_DEFAULT_GIT_REMOTE, HOMEBREW_BREW_GIT_REMOTE, HOMEBREW_CACHE, HOMEBREW_CELLAR, HOMEBREW_CURL
-# HOMEBREW_DEV_CMD_RUN, HOMEBREW_FORCE_BREWED_CURL, HOMEBREW_FORCE_BREWED_GIT, HOMEBREW_SYSTEM_CURL_TOO_OLD
-# HOMEBREW_USER_AGENT_CURL are set by brew.sh
+# HOMEBREW_DEV_CMD_RUN, HOMEBREW_FORCE_BREWED_CURL, HOMEBREW_FORCE_BREWED_GIT, HOMEBREW_MACOS,
+# HOMEBREW_SYSTEM_CURL_TOO_OLD, HOMEBREW_USER_AGENT_CURL are set by brew.sh
 # shellcheck disable=SC2154
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/lock.sh"
 
@@ -777,6 +777,8 @@ EOS
 
     for formula_or_cask in formula cask
     do
+      [[ -z "${HOMEBREW_MACOS}" && "${formula_or_cask}" == "cask" ]] && continue
+
       if [[ -f "${HOMEBREW_CACHE}/api/${formula_or_cask}.jws.json" ]]
       then
         INITIAL_JSON_BYTESIZE="$(wc -c "${HOMEBREW_CACHE}"/api/"${formula_or_cask}".jws.json)"

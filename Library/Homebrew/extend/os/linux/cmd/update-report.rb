@@ -6,6 +6,10 @@ module Homebrew
 
   module_function
 
+  def cask_write_names
+    # do nothing
+  end
+
   def no_changes_message
     "No changes to formulae."
   end

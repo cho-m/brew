@@ -148,7 +148,7 @@ module Homebrew
     # Check if we can parse the JSON and do any Ruby-side follow-up.
     unless Homebrew::EnvConfig.no_install_from_api?
       Homebrew::API::Formula.write_names_and_aliases
-      Homebrew::API::Cask.write_names
+      cask_write_names
     end
 
     Homebrew.failed = true if ENV["HOMEBREW_UPDATE_FAILED"]
@@ -301,6 +301,10 @@ module Homebrew
       The #{new_tag} changelog can be found at:
         #{Formatter.url("https://github.com/Homebrew/brew/releases/tag/#{new_tag}")}
     EOS
+  end
+
+  def cask_write_names
+    Homebrew::API::Cask.write_names
   end
 
   def no_changes_message

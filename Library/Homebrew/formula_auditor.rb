@@ -140,17 +140,10 @@ module Homebrew
       @aliases ||= Formula.aliases + Formula.tap_aliases
     end
 
-    def synced_versions_formulae_json
-      @synced_versions_formulae_json ||= JSON.parse(File.read("#{formula.tap.path}/synced_versions_formulae.json"))
-    end
-
     def synced_with_other_formulae?
       return false unless formula.tap
 
-      synced_versions_formulae_file = "#{formula.tap.path}/synced_versions_formulae.json"
-      return false unless File.exist?(synced_versions_formulae_file)
-
-      synced_versions_formulae_json.any? { |synced_version_formulae| synced_version_formulae.include?(formula.name) }
+      formula.tap.synced_versions_formulae.any? { |synced_formulae| synced_formulae.include?(formula.name) }
     end
 
     def audit_synced_versions_formulae
@@ -160,7 +153,7 @@ module Homebrew
       name = formula.name
       version = formula.version
 
-      synced_versions_formulae_json.each do |synced_version_formulae|
+      formula.tap.synced_versions_formulae.each do |synced_version_formulae|
         next unless synced_version_formulae.include?(name)
 
         synced_version_formulae.each do |synced_formula|

@@ -180,6 +180,7 @@ class Tap
     @style_exceptions = nil
     @pypi_formula_mappings = nil
     @synced_versions_formulae = nil
+    @synced_versions_formulae_mapping = nil
     @config = nil
     @spell_checker = nil
     remove_instance_variable(:@private) if instance_variable_defined?(:@private)
@@ -873,6 +874,20 @@ class Tap
     end
   end
 
+  # Hash with synced versions formulae.
+  sig { returns(T::Hash[String, T::Array[String]]) }
+  def synced_versions_formulae_mapping
+    if @synced_versions_formulae_mapping.nil?
+      @synced_versions_formulae_mapping = {}
+      synced_versions_formulae.each do |synced_version_formulae|
+        synced_version_formulae.each do |formula|
+          @synced_versions_formulae_mapping[formula] = synced_version_formulae
+        end
+      end
+    end
+    @synced_versions_formulae_mapping
+  end
+
   # @private
   sig { returns(T::Boolean) }
   def should_report_analytics?
@@ -1185,6 +1200,15 @@ class CoreTap < AbstractCoreTap
   sig { returns(T::Array[T::Array[String]]) }
   def synced_versions_formulae
     @synced_versions_formulae ||= begin
+      ensure_installed!
+      super
+    end
+  end
+
+  # @private
+  sig { returns(T::Hash[String, T::Array[String]]) }
+  def synced_versions_formulae_mapping
+    @synced_versions_formulae_mapping ||= begin
       ensure_installed!
       super
     end

@@ -211,6 +211,9 @@ module PyPI
                                     print_only: false, silent: false, verbose: false,
                                     ignore_non_pypi_packages: false)
 
+    venv = nil
+    dependencies = nil
+    pypi_dependencies = nil
     auto_update_list = formula.tap&.pypi_formula_mappings
     if auto_update_list.present? && auto_update_list.key?(formula.full_name) &&
        package_name.blank? && extra_packages.blank? && exclude_packages.blank?
@@ -228,6 +231,10 @@ module PyPI
         extra_packages = list_entry["extra_packages"]
         exclude_packages = list_entry["exclude_packages"]
         dependencies = list_entry["dependencies"]
+        if dependencies.is_a?(Hash)
+          pypi_dependencies = dependencies["pypi"]
+          dependencies = dependencies["brew"]
+        end
       end
     end
 
@@ -252,6 +259,20 @@ module PyPI
       "python"
     else
       (python_deps.find(&:any_version_installed?) || python_deps.first).name
+    end
+
+    if pypi_dependencies.present?
+      unless install_dependencies
+        odie "Unable to update resources without creating venv with #{pypi_dependencies.join(", ")}"
+      end
+      ohai "Creating venv with #{pypi_dependencies.join(", ")}"
+      ensure_formula_installed!(python_name)
+      require "language/python"
+      python = Formula[python_name].opt_libexec/"bin/python"
+      venv = Language::Python::Virtualenv::Virtualenv.new(formula, Dir.mktmpdir, python)
+      venv.create(system_site_packages: false, without_pip: false)
+      venv.pip_install(pypi_dependencies)
+      # ENV["PATH"] = PATH.new(ENV.fetch("PATH")).insert(1, venv.root/"bin").to_s
     end
 
     main_package = if package_name.present?
@@ -319,11 +340,11 @@ module PyPI
     # Resolve the dependency tree of all input packages
     show_info = !print_only && !silent
     ohai "Retrieving PyPI dependencies for \"#{input_packages.join(" ")}\"..." if show_info
-    found_packages = pip_report(input_packages, python_name:, print_stderr: verbose && show_info)
+    found_packages = pip_report(input_packages, python_name:, venv:, print_stderr: verbose && show_info)
     # Resolve the dependency tree of excluded packages to prune the above
     exclude_packages.delete_if { |package| found_packages.exclude? package }
     ohai "Retrieving PyPI dependencies for excluded \"#{exclude_packages.join(" ")}\"..." if show_info
-    exclude_packages = pip_report(exclude_packages, python_name:, print_stderr: verbose && show_info)
+    exclude_packages = pip_report(exclude_packages, python_name:, venv:, print_stderr: verbose && show_info)
     exclude_packages += [Package.new(main_package.name)] unless main_package.nil?
 
     new_resource_blocks = ""
@@ -383,6 +404,8 @@ module PyPI
     end
 
     true
+  ensure
+    FileUtils.remove_entry venv.root if venv.present?
   end
 
   def self.normalize_python_package(name)
@@ -391,12 +414,19 @@ module PyPI
     name.gsub(/[-_.]+/, "-").downcase
   end
 
-  def self.pip_report(packages, python_name: "python", print_stderr: false)
+  def self.pip_report(packages, python_name: "python", venv: nil, print_stderr: false)
     return [] if packages.blank?
 
+    pip_extra_args = []
+    python = if venv.nil?
+      Formula[python_name].opt_libexec/"bin/python"
+    else
+      pip_extra_args << "--no-build-isolation"
+      venv.root/"bin/python"
+    end
     command = [
-      Formula[python_name].opt_libexec/"bin/python", "-m", "pip", "install", "-q", "--disable-pip-version-check",
-      "--dry-run", "--ignore-installed", "--report=/dev/stdout", *packages.map(&:to_s)
+      python, "-m", "pip", "install", "-q", "--disable-pip-version-check",
+      "--dry-run", "--report=/dev/stdout", *pip_extra_args, *packages.map(&:to_s)
     ]
     options = {}
     options[:err] = :err if print_stderr

@@ -471,15 +471,19 @@ module Homebrew
         check_closed_pull_requests(formula, tap_remote_repo, version:)
       end
 
+      sig { params(formula: Formula, new_version: String).void }
       def check_throttle(formula, new_version)
-        throttled_rate = formula.livecheck.throttle
-        throttled_rate ||= formula.tap.audit_exceptions.dig(:throttled_formulae, formula.name)
+        throttled_rate, throttled_unit = formula.livecheck.throttle
+        throttled_rate ||= formula.tap&.audit_exceptions&.dig(:throttled_formulae, formula.name)
         return if throttled_rate.blank?
 
-        formula_suffix = Version.new(new_version).patch.to_i
-        return if formula_suffix.modulo(throttled_rate).zero?
+        new_version = Version.new(new_version)
+        formula_throttled_version_part = new_version.send(throttled_unit).to_i
+        return if formula_throttled_version_part.modulo(throttled_rate).zero? &&
+                  (throttled_unit == :patch || new_version.patch.to_i.zero?)
 
-        odie "#{formula} should only be updated every #{throttled_rate} releases on multiples of #{throttled_rate}"
+        odie "#{formula} should only be updated every #{throttled_rate} " \
+             "#{throttled_unit} releases on multiples of #{throttled_rate}"
       end
 
       def check_closed_pull_requests(formula, tap_remote_repo, version:)

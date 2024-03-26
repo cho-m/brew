@@ -14,6 +14,8 @@ require "livecheck/constants"
 class Livecheck
   extend Forwardable
 
+  VALID_THROTTLE_UNITS = T.let([:minor, :patch].freeze, T::Array[Symbol])
+
   # A very brief description of why the formula/cask/resource is skipped (e.g.
   # `No longer developed or maintained`).
   sig { returns(T.nilable(String)) }
@@ -136,20 +138,24 @@ class Livecheck
   sig { returns(T.nilable(Proc)) }
   attr_reader :strategy_block
 
-  # Sets the `@throttle` instance variable to the provided `Integer` or returns
-  # the `@throttle` instance variable when no argument is provided.
+  # Sets the `@throttle` instance variable to the provided `Integer` and `Symbol`
+  # or returns the `@throttle` instance variable when no argument is provided.
   sig {
     params(
-      # Throttle rate of version patch number to use for bumpable versions.
+      # Throttle rate to use for bumpable versions.
       rate: Integer,
-    ).returns(T.nilable(Integer))
+      # Throttle unit to interpret the rate with (by default the patch version)
+      unit: Symbol,
+    ).returns(T.nilable([Integer, Symbol]))
   }
-  def throttle(rate = T.unsafe(nil))
+  def throttle(rate = T.unsafe(nil), unit = :patch)
+    raise ArgumentError, "#{unit} is not a valid throttle unit" if VALID_THROTTLE_UNITS.exclude?(unit)
+
     case rate
     when nil
       @throttle
     when Integer
-      @throttle = rate
+      @throttle = [rate, unit]
     end
   end
 

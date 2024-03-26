@@ -680,6 +680,7 @@ module Homebrew
       livecheck_strategy = livecheck.strategy || referenced_livecheck&.strategy
       livecheck_strategy_block = livecheck.strategy_block || referenced_livecheck&.strategy_block
       livecheck_throttle = livecheck.throttle || referenced_livecheck&.throttle
+      livecheck_throttle_rate, livecheck_throttle_unit = livecheck_throttle
 
       livecheck_url_string = livecheck_url_to_string(
         livecheck_url,
@@ -697,7 +698,7 @@ module Homebrew
           puts "Cask:             #{cask_name(formula_or_cask, full_name:)}"
         end
         puts "Livecheckable?:   #{has_livecheckable ? "Yes" : "No"}"
-        puts "Throttle:         #{livecheck_throttle}" if livecheck_throttle
+        puts "Throttle:         #{livecheck_throttle_rate} (#{livecheck_throttle_unit})" if livecheck_throttle
 
         livecheck_references.each do |ref_formula_or_cask|
           case ref_formula_or_cask
@@ -830,7 +831,10 @@ module Homebrew
         }
 
         if livecheck_throttle
-          match_version_map.keep_if { |_match, version| version.patch.to_i.modulo(livecheck_throttle).zero? }
+          match_version_map.keep_if do |_match, version|
+            version.send(livecheck_throttle_unit).to_i.modulo(livecheck_throttle_rate).zero? &&
+              (livecheck_throttle_unit == :patch || version.patch.to_i.zero?)
+          end
           version_info[:latest_throttled] = if match_version_map.blank?
             nil
           else

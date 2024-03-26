@@ -105,9 +105,20 @@ RSpec.describe Livecheck do
       expect(livecheckable_f.throttle).to be_nil
     end
 
-    it "returns the Integer if set" do
+    it "returns the Integer and `:patch` if set with rate" do
       livecheckable_f.throttle(10)
-      expect(livecheckable_f.throttle).to eq(10)
+      expect(livecheckable_f.throttle).to eq([10, :patch])
+    end
+
+    it "returns the Integer and Symbol if set with rate and unit" do
+      livecheckable_f.throttle(10, :minor)
+      expect(livecheckable_f.throttle).to eq([10, :minor])
+    end
+
+    it "raises an ArgumentError if the argument isn't a valid Symbol" do
+      expect do
+        livecheckable_f.throttle(10, :not_a_valid_symbol)
+      end.to raise_error ArgumentError
     end
   end
 

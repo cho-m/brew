@@ -31,6 +31,7 @@ module Homebrew
 
     STRATEGY_SYMBOLS_TO_SKIP_PREPROCESS_URL = T.let([
       :extract_plist,
+      :github_api,
       :github_latest,
       :header_match,
       :json,

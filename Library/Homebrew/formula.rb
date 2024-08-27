@@ -3249,6 +3249,7 @@ class Formula
         @livecheck = Livecheck.new(self)
         @conflicts = []
         @skip_clean_paths = Set.new
+        @skip_relocation_paths = Set.new
         @link_overwrite_paths = Set.new
         @loaded_from_api = false
         @network_access_allowed = SUPPORTED_NETWORK_ACCESS_PHASES.to_h do |phase|
@@ -3273,6 +3274,7 @@ class Formula
       @livecheck.freeze
       @conflicts.freeze
       @skip_clean_paths.freeze
+      @skip_relocation_paths.freeze
       @link_overwrite_paths.freeze
       super
     end
@@ -3472,7 +3474,7 @@ class Formula
     sig { returns(T::Array[FormulaConflict]) }
     attr_reader :conflicts
 
-    attr_reader :skip_clean_paths, :link_overwrite_paths, :pour_bottle_only_if
+    attr_reader :skip_clean_paths, :skip_relocation_paths, :link_overwrite_paths, :pour_bottle_only_if
 
     # If `pour_bottle?` returns `false` the user-visible reason to display for
     # why they cannot use the bottle.
@@ -3954,6 +3956,29 @@ class Formula
       paths.flatten!
       # Specifying :all is deprecated and will become an error
       skip_clean_paths.merge(paths)
+    end
+
+    # Skip relocating paths in a formula.
+    #
+    # Only relative paths to filenames within the formula prefix are supported.
+    # Absolute paths and ".." paths will error while directories are ignored.
+    #
+    # ### Examples
+    #
+    # Avoid rewriting binaries with:
+    #
+    # ```ruby
+    # skip_relocation "bin/foo", "lib/bar"
+    # ```
+    #
+    # @api public
+    def skip_relocation(*paths)
+      paths.flatten!
+      if paths.any? { |p| !p.is_a?(String) || File.absolute_path?(p) || p.match?(%r{(^|/)\.\.($|/)}) }
+        raise ArgumentError, "All `skip_relocation` paths must be strings for relative paths to filenames"
+      end
+
+      skip_relocation_paths.merge(paths)
     end
 
     # Software that will not be symlinked into the `brew --prefix` and will

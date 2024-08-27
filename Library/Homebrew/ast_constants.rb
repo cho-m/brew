@@ -38,6 +38,7 @@ FORMULA_COMPONENT_PRECEDENCE_LIST = T.let([
   [{ name: :on_intel, type: :block_call }],
   [{ name: :conflicts_with, type: :method_call }],
   [{ name: :skip_clean, type: :method_call }],
+  [{ name: :skip_relocation, type: :method_call }],
   [{ name: :cxxstdlib_check, type: :method_call }],
   [{ name: :link_overwrite, type: :method_call }],
   [{ name: :fails_with, type: :method_call }, { name: :fails_with, type: :block_call }],

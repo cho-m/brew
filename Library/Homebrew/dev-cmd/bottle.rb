@@ -502,6 +502,7 @@ module Homebrew
         ohai "Bottling #{local_filename}..."
 
         formula_and_runtime_deps_names = [formula.name] + formula.runtime_dependencies.map(&:name)
+        skip_files = formula.class.skip_relocation_paths
 
         # this will be nil when using a local bottle
         keg&.lock do
@@ -511,7 +512,7 @@ module Homebrew
           begin
             keg.delete_pyc_files!
 
-            changed_files = keg.replace_locations_with_placeholders unless args.skip_relocation?
+            changed_files = keg.replace_locations_with_placeholders(skip_files:) unless args.skip_relocation?
 
             Formula.clear_cache
             Keg.clear_cache
@@ -603,7 +604,7 @@ module Homebrew
           ensure
             ignore_interrupts do
               original_tab&.write
-              keg.replace_placeholders_with_locations changed_files unless args.skip_relocation?
+              keg.replace_placeholders_with_locations(changed_files, skip_files:) unless args.skip_relocation?
             end
           end
         end

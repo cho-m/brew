@@ -79,7 +79,7 @@ class Keg
   end
   alias generic_fix_dynamic_linkage fix_dynamic_linkage
 
-  def relocate_dynamic_linkage(_relocation)
+  def relocate_dynamic_linkage(_relocation, skip_files: nil)
     []
   end
 
@@ -104,10 +104,10 @@ class Keg
   end
   alias generic_prepare_relocation_to_placeholders prepare_relocation_to_placeholders
 
-  def replace_locations_with_placeholders
+  def replace_locations_with_placeholders(skip_files: nil)
     relocation = prepare_relocation_to_placeholders.freeze
-    relocate_dynamic_linkage(relocation)
-    replace_text_in_files(relocation)
+    relocate_dynamic_linkage(relocation, skip_files:)
+    replace_text_in_files(relocation, skip_files:)
   end
 
   def prepare_relocation_to_locations
@@ -125,10 +125,10 @@ class Keg
   end
   alias generic_prepare_relocation_to_locations prepare_relocation_to_locations
 
-  def replace_placeholders_with_locations(files, skip_linkage: false)
+  def replace_placeholders_with_locations(files, skip_linkage: false, skip_files: nil)
     relocation = prepare_relocation_to_locations.freeze
-    relocate_dynamic_linkage(relocation) unless skip_linkage
-    replace_text_in_files(relocation, files:)
+    relocate_dynamic_linkage(relocation, skip_files:) unless skip_linkage
+    replace_text_in_files(relocation, files:, skip_files:)
   end
 
   def openjdk_dep_name_if_applicable
@@ -139,8 +139,9 @@ class Keg
     dep_names.find { |d| d.match? Version.formula_optionally_versioned_regex(:openjdk) }
   end
 
-  def replace_text_in_files(relocation, files: nil)
+  def replace_text_in_files(relocation, files: nil, skip_files: nil)
     files ||= text_files | libtool_files
+    files.reject! { |f| skip_files.include? (f.absolute? ? f.relative_path_from(path) : f).to_s } if skip_files
 
     changed_files = T.let([], Array)
     files.map { path.join(_1) }.group_by { |f| f.stat.ino }.each_value do |first, *rest|

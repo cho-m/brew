@@ -4,13 +4,15 @@
 require "compilers"
 
 class Keg
-  def relocate_dynamic_linkage(relocation)
+  def relocate_dynamic_linkage(relocation, skip_files: nil)
     # Patching the dynamic linker of glibc breaks it.
     return if name.match? Version.formula_optionally_versioned_regex(:glibc)
 
     old_prefix, new_prefix = relocation.replacement_pair_for(:prefix)
 
     elf_files.each do |file|
+      next if skip_files&.include? file.relative_path_from(path).to_s
+
       file.ensure_writable do
         change_rpath(file, old_prefix, new_prefix)
       end

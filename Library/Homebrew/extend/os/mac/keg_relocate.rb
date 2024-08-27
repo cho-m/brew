@@ -18,8 +18,10 @@ class Keg
 
   undef relocate_dynamic_linkage
 
-  def relocate_dynamic_linkage(relocation)
+  def relocate_dynamic_linkage(relocation, skip_files: nil)
     mach_o_files.each do |file|
+      next if skip_files&.include? file.relative_path_from(path).to_s
+
       file.ensure_writable do
         modified = T.let(false, T::Boolean)
         needs_codesigning = T.let(false, T::Boolean)

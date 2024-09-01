@@ -450,7 +450,11 @@ class Cmd
   end
 
   def ld_classic?
-    config.include?("c") && calls_ld? && @args.any? { |arg| arg.match?(/^(-Wl,)?-dead_strip_dylibs$/) }
+    return false unless config.include?("c")
+    return false unless calls_ld?
+    return true if @args.include?("-dead_strip_dylibs")
+
+    @args.any? { |arg| arg.match?(/^-Wl,(.*,)?-dead_strip_dylibs(,|$)/) }
   end
 
   def calls_ld?

@@ -94,7 +94,7 @@ class LinkageChecker
 
   sig { params(file: String).returns(T::Boolean) }
   def broken_dylibs_allowed?(file)
-    return false if formula.name != "julia"
+    return false if formula.blank? || formula.name != "julia"
 
     file.start_with?("#{formula.prefix.realpath}/share/julia/compiled/")
   end

@@ -3142,13 +3142,7 @@ class Formula
   # Runs `xcodebuild` without Homebrew's compiler environment variables set.
   sig { params(args: T.any(String, Integer, Pathname, Symbol)).void }
   def xcodebuild(*args)
-    removed = ENV.remove_cc_etc
-
-    begin
-      self.system("xcodebuild", *args)
-    ensure
-      ENV.update(removed)
-    end
+    raise "`xcodebuild` can only be run on macOS"
   end
 
   def fetch_patches

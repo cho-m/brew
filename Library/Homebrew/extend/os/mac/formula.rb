@@ -4,6 +4,7 @@
 class Formula
   undef valid_platform?
   undef std_cmake_args
+  undef xcodebuild
 
   sig { returns(T::Boolean) }
   def valid_platform?
@@ -29,5 +30,16 @@ class Formula
     args << "-DCMAKE_OSX_SYSROOT=#{MacOS.sdk_for_formula(self).path}" if MacOS.sdk_root_needed?
 
     args
+  end
+
+  sig { params(args: T.any(String, Integer, Pathname, Symbol)).void }
+  def xcodebuild(*args)
+    removed = ENV.remove_cc_etc
+
+    begin
+      self.system("#{MacOS::Xcode.prefix}/usr/bin/xcodebuild", *args)
+    ensure
+      ENV.update(removed)
+    end
   end
 end

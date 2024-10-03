@@ -50,6 +50,7 @@ module Cask
       Artifact::Mdimporter,
       Artifact::ScreenSaver,
       Artifact::Service,
+      Artifact::ShimScript,
       Artifact::StageOnly,
       Artifact::Suite,
       Artifact::VstPlugin,

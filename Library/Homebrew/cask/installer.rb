@@ -81,7 +81,9 @@ module Cask
 
       Caskroom.ensure_caskroom_exists
 
-      extract_primary_container
+      kwargs = {}
+      kwargs[:to] = @cask.staged_path.join(@cask.container.target) if @cask.container&.target
+      extract_primary_container(**kwargs)
       save_caskfile
     rescue => e
       purge_versioned_files

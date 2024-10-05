@@ -7,11 +7,12 @@ module Cask
   class DSL
     # Class corresponding to the `container` stanza.
     class Container
-      attr_accessor :nested, :type
+      attr_accessor :nested, :type, :target
 
-      def initialize(nested: nil, type: nil)
+      def initialize(nested: nil, type: nil, target: nil)
         @nested = nested
         @type = type
+        @target = target
 
         return if type.nil?
         return unless UnpackStrategy.from_type(type).nil?
